@@ -157,14 +157,32 @@ const amountInPaise = Math.round(amountInINR * 100); // 49950 paise
 
 ## 6. Razorpay Integration Deep Dive
 
-### Webhooks Subscribed:
-- `payment.failed`: Triggers new recovery case creation.
-- `payment.authorized` & `payment.captured`: Confirms recovery.
-- `subscription.halted`: Triggers urgent escalation sequence.
-- `invoice.paid`: Resolves invoice-level recovery case.
+### Production Webhook Endpoint:
+- **Live Ingestion URL**: `https://recoverai-backend.onrender.com/api/webhooks/razorpay`
+- **Razorpay Dashboard Configuration**: [Manage Webhook Settings](https://dashboard.razorpay.com/app/webhooks/TVHgGAk8CcN6HN)
+
+### Webhooks Subscribed & Handled:
+1. `payment.failed` — Intercepts failed recurring card / UPI transactions and creates an autonomous recovery case.
+2. `payment.authorized` & `payment.captured` — Confirms successful recovery upon checkout completion.
+3. `subscription.halted` — Triggers high-urgency dunning sequence when autopay mandate enters halted state.
+4. `invoice.payment_failed` — Intercepts B2B and one-time invoice failures.
+5. `invoice.paid` — Automatically marks active recovery case as `RECOVERED`.
 
 ### Webhook Signature Verification Formula:
-$$\text{Expected Signature} = \text{HMAC-SHA256}(\text{Raw Payload Body}, \text{Razorpay Webhook Secret})$$
+$$\text{Expected Signature} = \text{HMAC-SHA256}(\text{Raw Payload Body}, \text{RAZORPAY\_WEBHOOK\_SECRET})$$
+
+```javascript
+// Verification implementation:
+const expectedSignature = crypto
+  .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
+  .update(req.rawBody)
+  .digest('hex');
+
+const isValid = crypto.timingSafeEqual(
+  Buffer.from(expectedSignature, 'utf8'),
+  Buffer.from(req.headers['x-razorpay-signature'], 'utf8')
+);
+```
 
 If $\text{Expected Signature} \neq \text{Received Header Signature}$, the request is rejected with `401 Unauthorized` before processing.
 

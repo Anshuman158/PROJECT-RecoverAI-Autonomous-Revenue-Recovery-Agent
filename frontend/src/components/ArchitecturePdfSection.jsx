@@ -198,6 +198,16 @@ export default function ArchitecturePdfSection() {
               </div>
             </div>
           </div>
+
+          <div style={{ marginTop: '12px', padding: '12px 16px', background: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ fontSize: '0.82rem' }}>
+              <strong style={{ color: '#60a5fa' }}>Live Webhook: </strong>
+              <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>https://recoverai-backend.onrender.com/api/webhooks/razorpay</code>
+            </div>
+            <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
+              HMAC-SHA256 Verified
+            </span>
+          </div>
         </section>
 
         {/* Section 3: End-to-End Visual Architecture Diagram */}
