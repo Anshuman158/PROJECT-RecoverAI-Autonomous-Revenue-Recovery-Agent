@@ -1,6 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import healthRouter from './routes/health.js';
+import webhooksRouter from './routes/webhooks.js';
+import dashboardRouter from './routes/dashboard.js';
+import recoveryCasesRouter from './routes/recoveryCases.js';
+import demoRouter from './routes/demo.js';
+import evaluationRouter from './routes/evaluation.js';
 import { logger } from './utils/logger.js';
 
 export const createApp = () => {
@@ -12,7 +17,7 @@ export const createApp = () => {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
   }));
 
-  // Capture raw body for Razorpay webhook signature verification
+  // Capture raw body for Razorpay webhook cryptographic HMAC verification
   app.use(express.json({
     verify: (req, res, buf) => {
       req.rawBody = buf;
@@ -39,6 +44,11 @@ export const createApp = () => {
 
   // Base API routes
   app.use('/api', healthRouter);
+  app.use('/api', webhooksRouter);
+  app.use('/api', dashboardRouter);
+  app.use('/api', recoveryCasesRouter);
+  app.use('/api', demoRouter);
+  app.use('/api', evaluationRouter);
 
   // Fallback 404 handler
   app.use((req, res) => {

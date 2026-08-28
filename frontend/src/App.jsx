@@ -4,21 +4,23 @@ import {
   LayoutDashboard, 
   Activity, 
   FileText, 
-  Sliders, 
   PlayCircle, 
-  BarChart3,
-  CheckCircle2,
-  AlertTriangle,
+  BarChart3, 
   RefreshCw,
   Server,
-  BookOpen,
-  Sparkles
+  BookOpen
 } from 'lucide-react';
 import { api } from './services/api';
+import DashboardView from './components/DashboardView';
+import RecoveryCasesView from './components/RecoveryCasesView';
+import AuditTrailView from './components/AuditTrailView';
+import EvaluationView from './components/EvaluationView';
+import DemoStudioView from './components/DemoStudioView';
 import ArchitecturePdfSection from './components/ArchitecturePdfSection';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('architecture');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +41,11 @@ export default function App() {
   useEffect(() => {
     fetchHealth();
   }, []);
+
+  const handleSelectCaseFromDashboard = (caseId) => {
+    setSelectedCaseId(caseId);
+    setActiveTab('cases');
+  };
 
   return (
     <div className="app-container">
@@ -68,7 +75,7 @@ export default function App() {
             <li>
               <button 
                 className={`nav-link ${activeTab === 'cases' ? 'active' : ''}`}
-                onClick={() => setActiveTab('cases')}
+                onClick={() => { setSelectedCaseId(null); setActiveTab('cases'); }}
               >
                 <Activity size={18} />
                 <span>Recovery Cases</span>
@@ -99,13 +106,13 @@ export default function App() {
               >
                 <PlayCircle size={18} />
                 <span>Demo Studio</span>
+                <span className="badge badge-neutral" style={{ fontSize: '0.6rem', padding: '1px 6px', marginLeft: 'auto' }}>Sim</span>
               </button>
             </li>
             <li>
               <button 
                 className={`nav-link ${activeTab === 'architecture' ? 'active' : ''}`}
                 onClick={() => setActiveTab('architecture')}
-                style={{ position: 'relative' }}
               >
                 <BookOpen size={18} color="#60a5fa" />
                 <span style={{ fontWeight: '700', color: activeTab === 'architecture' ? '#fff' : '#93c5fd' }}>Architecture & PDF</span>
@@ -132,8 +139,14 @@ export default function App() {
       <main className="main-content">
         <header className="top-nav">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: '700', textTransform: 'capitalize' }}>{activeTab}</h2>
-            <span className="badge badge-neutral">Razorpay Test Mode</span>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: '700', textTransform: 'capitalize' }}>
+              {activeTab === 'architecture' ? 'System Architecture & Defense Dossier' : 
+               activeTab === 'cases' ? 'Recovery Cases' :
+               activeTab === 'audit' ? 'Audit Trail' :
+               activeTab === 'evaluation' ? 'Benchmark Evaluation' :
+               activeTab === 'demo' ? 'Demo Studio' : 'Dashboard Overview'}
+            </h2>
+            <span className="badge badge-neutral">Razorpay Webhooks Active</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -145,66 +158,12 @@ export default function App() {
         </header>
 
         <div className="page-content">
-          {activeTab === 'architecture' ? (
-            <ArchitecturePdfSection />
-          ) : (
-            <>
-              {/* Phase 1 Verification Card */}
-              <div className="card" style={{ marginBottom: '24px' }}>
-                <div className="card-title">
-                  <span>System Health & Core Guardrails Status</span>
-                  {health?.status === 'HEALTHY' ? (
-                    <span className="badge badge-success">Operational</span>
-                  ) : (
-                    <span className="badge badge-warning">Connecting</span>
-                  )}
-                </div>
-
-                {error ? (
-                  <div style={{ padding: '16px', background: 'var(--color-danger-bg)', borderRadius: 'var(--radius-md)', color: '#fca5a5' }}>
-                    <AlertTriangle size={18} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
-                    Backend Connection Error: {error}
-                  </div>
-                ) : (
-                  <div className="grid-cards" style={{ marginTop: '16px', marginBottom: 0 }}>
-                    <div style={{ background: 'var(--bg-surface-elevated)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Max Auto Recovery Cap</div>
-                      <div style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary)', marginTop: '4px' }}>
-                        ₹{health?.policyLimits?.maxAutonomousRecoveryAmountINR?.toLocaleString() || '10,000'}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        {health?.policyLimits?.maxAutonomousRecoveryAmountPaise || 1000000} paise (Paise Safe)
-                      </div>
-                    </div>
-
-                    <div style={{ background: 'var(--bg-surface-elevated)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Max Retry Attempts</div>
-                      <div style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary)', marginTop: '4px' }}>
-                        {health?.policyLimits?.maxRetryAttempts || 3} Attempts
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        Hard limit per recovery case
-                      </div>
-                    </div>
-
-                    <div style={{ background: 'var(--bg-surface-elevated)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Min AI Confidence</div>
-                      <div style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary)', marginTop: '4px' }}>
-                        {((health?.policyLimits?.minAiConfidence || 0.7) * 100).toFixed(0)}%
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        Below threshold forces escalation
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                Active Tab: <span style={{ textTransform: 'capitalize', color: 'var(--text-primary)' }}>{activeTab}</span>. Select <strong>Architecture & PDF</strong> in the sidebar to review the full architecture breakdown and interview Q&A.
-              </div>
-            </>
-          )}
+          {activeTab === 'dashboard' && <DashboardView onSelectCase={handleSelectCaseFromDashboard} />}
+          {activeTab === 'cases' && <RecoveryCasesView initialCaseId={selectedCaseId} />}
+          {activeTab === 'audit' && <AuditTrailView />}
+          {activeTab === 'evaluation' && <EvaluationView />}
+          {activeTab === 'demo' && <DemoStudioView />}
+          {activeTab === 'architecture' && <ArchitecturePdfSection />}
         </div>
       </main>
     </div>
